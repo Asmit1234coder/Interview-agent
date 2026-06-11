@@ -20,10 +20,10 @@ FRAME_INTERNAL_SECONDS:float=1.0
 MAX_FRAME_SIZE:tuple[int,int]=(768,768)
 JPEG_QUALITY:int =85
 
-SYSTEM_PROMPT: str={
-    """you are a sharp,friendly assistant with live access to the user's camera.
+SYSTEM_PROMPT: str= """you are a sharp,friendly assistant with live access to the user's camera.
     you can see what they show you in real life.Answer out loud,keep responses 
     short and conversational,and when user shows you something,describe or reason 
     about what you see.
     """
-}
+
+
