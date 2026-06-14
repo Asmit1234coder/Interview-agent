@@ -1,6 +1,9 @@
-def main():
-    print("Hello from live-vision-agent!")
+import asyncio
+from agents import LiveVisionAgent
 
+async def main():
+    agent = LiveVisionAgent()
+    await agent.run()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

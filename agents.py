@@ -5,7 +5,7 @@ from google.genai.live import AsyncSession
 
 from audio import AudioIo
 from webcam import Camera
-from config import (
+from src.config import (
     CHUNK_SIZE,
     FRAME_INTERNAL_SECONDS,
     GEMINI_API_KEY,
@@ -14,22 +14,21 @@ from config import (
     SYSTEM_PROMPT,
     VOICE,
 )
-
 LIVE_CONFIG = types.LiveConnectConfig(
     response_modalities=["AUDIO"],
     system_instruction=SYSTEM_PROMPT,
-    speech_config=types.SpeechConfig(   # ✅ fix typo: was speecConfig
+    speech_config=types.SpeechConfig(
         voice_config=types.VoiceConfig(
-            prebuilt_voice_config=types.PrebuiltVoice(voice_name=VOICE)
+            prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=VOICE)
         )
     ),
-    output_audio_transcription=types.AudioTranscriptionConfig(
-        context_window_compression=types.ContextWindowCompressionConfig(
-            trigger_tokens=25_000,
-            sliding_window=types.SlidingWindow(target_tokens=12_800),
-        ),
+    output_audio_transcription=types.AudioTranscriptionConfig(),
+    context_window_compression=types.ContextWindowCompressionConfig(
+        trigger_tokens=25_000,
+        sliding_window=types.SlidingWindow(target_tokens=12_800),
     ),
 )
+
 
 
 class LiveVisionAgent:
@@ -46,7 +45,7 @@ class LiveVisionAgent:
     async def _stream_microphone(self) -> None:
         """Read raw PCM chunks from mic and send them upstream"""
         mic = self._audio.open_mic()
-        mime_type = f"audio/pcm:rate={SEND_SAMPLE_RATE}"
+        mime_type = f"audio/pcm;rate={SEND_SAMPLE_RATE}"
         while True:
             chunk = await asyncio.to_thread(
                 mic.read, CHUNK_SIZE, exception_on_overflow=False
@@ -95,11 +94,16 @@ class LiveVisionAgent:
 
     async def run(self) -> None:
         """Start live session and run all tasks"""
-        async with self._client.live.connect(model=MODEL, config=LIVE_CONFIG) as session:
-            self._session = session
-            await asyncio.gather(
-                self._stream_microphone(),
-                self._stream_camera(),
-                self._receive_responses(),
-                self._playback_audio(),
-            )
+        try:
+            async with self._client.aio.live.connect(model=MODEL, config=LIVE_CONFIG) as session:
+                self._session = session
+                await asyncio.gather(
+                    self._stream_microphone(),
+                    self._stream_camera(),
+                    self._receive_responses(),
+                    self._playback_audio(),
+                )
+        finally:
+            self._audio.close()
+            self._camera.close()
+            await self._client.aio.aclose()

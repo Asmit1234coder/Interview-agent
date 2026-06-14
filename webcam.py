@@ -8,7 +8,7 @@ class Camera:
     def __init__(self,device_index:int=0)->None:
         """"open webcame.Raises error if no camera is found."""
         self._capture=cv2.VideoCapture(device_index)
-        if not self._capture.isOpened:
+        if not self._capture.isOpened():
             raise RuntimeError(
                 f"No camera found at index {device_index}"
             )
